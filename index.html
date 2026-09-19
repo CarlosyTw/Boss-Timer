@@ -133,7 +133,7 @@
 
   <form id="form" autocomplete="off">
     <input id="code" type="text" placeholder="Código do servidor" required>
-    <input id="minutes" type="number" min="1" step="1" value="15" title="Minutos para spawnar">
+    <input id="minutes" type="number" min="1" step="1" value="14" title="Minutos para spawnar">
     <button type="submit">Adicionar</button>
   </form>
 
@@ -155,7 +155,7 @@
   const STORAGE_KEY = 'bossTimers.v1';
 
   // 👇 valor padrão usado no formulário de reset
-  const RESET_MINUTES = 15;
+  const RESET_MINUTES = 14;
 
   const list        = document.getElementById('list');
   const emptyEl     = document.getElementById('empty');
