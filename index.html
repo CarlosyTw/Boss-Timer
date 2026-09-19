@@ -291,7 +291,7 @@
     const total     = s.minutes * 60000;
     const remaining = s.spawnAt - now;
     const elapsed   = Math.min(Math.max(total - remaining, 0), total);
-    const pct       = total > 0 ? (elapsed / total) * 100 : 100;
+    const pct       = Math.min(100, Math.max(0, (1 - remaining / (15 * 60000)) * 100));
 
     p.code.textContent = s.code;
     p.fill.style.width = pct + '%';
