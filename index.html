@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" href="https://static.wikia.nocookie.net/grand-piece-online/images/d/dd/Turtleback_Helmet.jpg/revision/latest?cb=20250204211259" type="image/x-icon">
+<title>Timer de Boss</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#1b2130,#0b0d12 60%);
+    color:#e7ecf3;padding:26px 16px 60px;
+  }
+  .app{max-width:720px;margin:0 auto}
+  h1{font-size:1.6rem;margin:0 0 4px;text-align:center}
+  .sub{margin:0 0 5px;text-align:center;}
+  .sub img {width:150px; height:auto;}
+
+  form{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  input{
+    background:#141822;border:1px solid #262d3b;color:#e7ecf3;
+    padding:12px 14px;border-radius:12px;font-size:1rem;outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input:focus{border-color:#4f8cff;box-shadow:0 0 0 3px rgba(79,140,255,.15)}
+  #code{flex:1 1 200px;min-width:0;text-transform:uppercase}
+  #code::placeholder{text-transform:none}
+  #minutes{width:110px;text-align:center}
+  form button{
+    flex:0 0 auto;padding:12px 20px;border-radius:12px;border:0;cursor:pointer;
+    background:linear-gradient(180deg,#5b93ff,#3d78f0);color:#fff;font-weight:700;
+    font-size:1rem;transition:filter .15s, transform .05s;
+  }
+  form button:hover{filter:brightness(1.08)}
+  form button:active{transform:translateY(1px)}
+
+  /* Filtro */
+  .filter-row{margin-bottom:22px}
+  #filter{
+    width:100%;
+    background:#0f131b;
+    border:1px solid #232a37;
+  }
+  #filter::placeholder{color:#5e6878}
+
+  .card{
+    background:linear-gradient(180deg,#161a23,#12151d);
+    border:1px solid #242b39;border-radius:16px;
+    padding:14px 16px;margin-bottom:12px;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .info{min-width:0}
+  .code{
+    font-weight:700;font-size:1.05rem;word-break:break-word;
+    text-transform:uppercase;letter-spacing:.5px;
+  }
+  .status{font-size:.78rem;color:#8b96a8;margin-top:3px}
+  .time{
+    font-variant-numeric:tabular-nums;font-size:1.9rem;font-weight:800;
+    letter-spacing:.5px;color:#9fc0ff;white-space:nowrap;
+  }
+  .bar{height:6px;background:#0c0f15;border-radius:99px;margin:13px 0;overflow:hidden}
+  .fill{height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,#4f8cff,#7aa8ff);
+    transition:width .25s linear;
+  }
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .actions[hidden]{display:none}
+  .btn{
+    padding:8px 14px;border-radius:10px;border:1px solid #2c3444;cursor:pointer;
+    background:#1b2130;color:#c9d4e5;font-size:.85rem;font-weight:600;
+    transition:background .15s,border-color .15s,color .15s;
+  }
+  .btn:hover{background:#222a3b;border-color:#3a465c}
+  .btn.del:hover{background:#3a1b1f;border-color:#7d2b34;color:#ff9aa4}
+
+  /* Form inline de reset */
+  .reset-form{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding-top:10px;border-top:1px dashed #232a37;margin-top:10px;
+  }
+  .reset-form[hidden]{display:none}
+  .reset-form label{font-size:.82rem;color:#8b96a8}
+  .reset-min{
+    width:82px;text-align:center;
+    padding:8px 10px;font-size:.9rem;border-radius:10px;
+  }
+  .reset-form .btn.confirm{
+    background:#16311f;border-color:#2d6b3d;color:#7ee09b;
+  }
+  .reset-form .btn.confirm:hover{background:#1e432a;border-color:#3d8a52}
+  .reset-form .btn.cancel{
+    background:#2a1a1d;border-color:#5b2a31;color:#ff9aa4;
+  }
+  .reset-form .btn.cancel:hover{background:#3a1f24}
+
+  /* estado: pronto pra spawnar */
+  .card.ready{
+    border-color:#22c55e;
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  .card.ready .time{color:#4ade80;font-size:1.5rem}
+  .card.ready .fill{background:linear-gradient(90deg,#22c55e,#4ade80)}
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 0 1px rgba(34,197,94,.35),0 0 18px rgba(34,197,94,.10)}
+    50%    {box-shadow:0 0 0 1px rgba(34,197,94,.65),0 0 30px rgba(34,197,94,.28)}
+  }
+
+  .empty{
+    text-align:center;color:#6f7a8c;padding:34px 10px;
+    border:1px dashed #262d3b;border-radius:16px;font-size:.9rem;
+  }
+  .footer{display:flex;justify-content:center;margin-top:18px}
+  .footer button{
+    background:transparent;border:1px solid #2c3444;color:#8b96a8;
+    padding:9px 16px;border-radius:10px;cursor:pointer;font-size:.85rem;
+  }
+  .footer button:hover{border-color:#7d2b34;color:#ff9aa4}
+
+  @media (max-width:480px){
+    .time{font-size:1.55rem}
+    .card.ready .time{font-size:1.25rem}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Timer de Juzo</h1>
+  <p class="sub"><img src="https://static.wikia.nocookie.net/grand-piece-online/images/d/d4/Mythicalfruitchest.png/revision/latest?cb=20230701181241" alt="mc"></p>
+
+  <form id="form" autocomplete="off">
+    <input id="code" type="text" placeholder="Código do servidor" required>
+    <input id="minutes" type="number" min="1" step="1" value="15" title="Minutos para spawnar">
+    <button type="submit">Adicionar</button>
+  </form>
+
+  <div class="filter-row">
+    <input id="filter" type="text" placeholder="🔍 Filtrar por código do servidor">
+  </div>
+
+  <div id="list"></div>
+  <div id="empty" class="empty">Nenhum servidor na lista. Adicione um acima.</div>
+  <div id="emptyFilter" class="empty" style="display:none">Nenhum servidor corresponde ao filtro.</div>
+
+  <div class="footer" id="footer" style="display:none">
+    <button id="clearAll" type="button">Limpar tudo</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = 'bossTimers.v1';
+
+  // 👇 valor padrão usado no formulário de reset
+  const RESET_MINUTES = 15;
+
+  const list        = document.getElementById('list');
+  const emptyEl     = document.getElementById('empty');
+  const emptyFilter = document.getElementById('emptyFilter');
+  const footer      = document.getElementById('footer');
+  const form        = document.getElementById('form');
+  const codeInput   = document.getElementById('code');
+  const minInput    = document.getElementById('minutes');
+  const filterInput = document.getElementById('filter');
+
+  /** @type {{id:string, code:string, minutes:number, spawnAt:number}[]} */
+  let servers = load();
+  let lastKey = '';
+
+  /* ---------------- persistência ---------------- */
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr)
+        ? arr.filter(s => s && s.id && typeof s.spawnAt === 'number')
+        : [];
+    } catch (e) { return []; }
+  }
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(servers));
+  }
+
+  /* ---------------- helpers ---------------- */
+  function fmt(ms) {
+    const t = Math.max(0, Math.ceil(ms / 1000));
+    const h = Math.floor(t / 3600);
+    const m = Math.floor((t % 3600) / 60);
+    const s = t % 60;
+    const pad = n => String(n).padStart(2, '0');
+    return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  }
+
+  function uid() {
+    return (crypto && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+
+  /* ---------------- criar card ---------------- */
+  function createCard(s) {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.id = 'srv-' + s.id;
+    el.innerHTML = `
+      <div class="row">
+        <div class="info">
+          <div class="code"></div>
+          <div class="status"></div>
+        </div>
+        <div class="time"></div>
+      </div>
+      <div class="bar"><div class="fill"></div></div>
+      <div class="actions">
+        <button class="btn reset" type="button">Matei / Reiniciar</button>
+        <button class="btn del" type="button">Remover</button>
+      </div>
+      <div class="reset-form" hidden>
+        <label for="">Tempo (min):</label>
+        <input type="number" class="reset-min" min="1" step="1" value="${RESET_MINUTES}">
+        <button class="btn confirm" type="button">✓ Confirmar</button>
+        <button class="btn cancel" type="button">✗ Cancelar</button>
+      </div>
+    `;
+
+    el._parts = {
+      code:      el.querySelector('.code'),
+      status:    el.querySelector('.status'),
+      time:      el.querySelector('.time'),
+      fill:      el.querySelector('.fill'),
+      actions:   el.querySelector('.actions'),
+      resetForm: el.querySelector('.reset-form'),
+      resetMin:  el.querySelector('.reset-min')
+    };
+
+    // Abrir formulário de reset
+    el.querySelector('.reset').addEventListener('click', () => {
+      el._parts.actions.hidden = true;
+      el._parts.resetForm.hidden = false;
+      el._parts.resetMin.value = RESET_MINUTES;
+      el._parts.resetMin.focus();
+      el._parts.resetMin.select();
+    });
+
+    // Confirmar reset com o tempo digitado
+    el.querySelector('.confirm').addEventListener('click', () => {
+      let mins = parseFloat(el._parts.resetMin.value);
+      if (!Number.isFinite(mins) || mins <= 0) mins = RESET_MINUTES;
+      s.minutes = mins;
+      s.spawnAt = Date.now() + mins * 60000;
+      save();
+      el._parts.resetForm.hidden = true;
+      el._parts.actions.hidden = false;
+      tick();
+    });
+
+    // Cancelar
+    el.querySelector('.cancel').addEventListener('click', () => {
+      el._parts.resetForm.hidden = true;
+      el._parts.actions.hidden = false;
+    });
+
+    // Enter confirma / Esc cancela
+    el._parts.resetMin.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        el.querySelector('.confirm').click();
+      } else if (e.key === 'Escape') {
+        el.querySelector('.cancel').click();
+      }
+    });
+
+    // Remover servidor
+    el.querySelector('.del').addEventListener('click', () => {
+      servers = servers.filter(x => x.id !== s.id);
+      save();
+      lastKey = '';
+      tick();
+    });
+
+    return el;
+  }
+
+  /* ---------------- atualizar card ---------------- */
+  function updateCard(el, s, now) {
+    const p = el._parts;
+    const total     = s.minutes * 60000;
+    const remaining = s.spawnAt - now;
+    const elapsed   = Math.min(Math.max(total - remaining, 0), total);
+    const pct       = total > 0 ? (elapsed / total) * 100 : 100;
+
+    p.code.textContent = s.code;
+    p.fill.style.width = pct + '%';
+
+    if (remaining > 0) {
+      el.classList.remove('ready');
+      p.time.textContent = fmt(remaining);
+      p.status.textContent = remaining <= 60000
+        ? '⚡ prestes a spawnar'
+        : 'para spawnar';
+    } else {
+      el.classList.add('ready');
+      p.time.textContent = 'SPAWN!';
+      p.status.textContent = 'disponível há ' + fmt(-remaining);
+    }
+  }
+
+  /* ---------------- loop principal ---------------- */
+  function tick() {
+    const now = Date.now();
+    const filter = filterInput.value.trim().toUpperCase();
+
+    // 1) Ordena por proximidade de spawn
+    const sorted = [...servers].sort((a, b) => a.spawnAt - b.spawnAt);
+
+    // 2) Aplica filtro por código
+    const visible = filter
+      ? sorted.filter(s => s.code.toUpperCase().includes(filter))
+      : sorted;
+
+    // 3) Reordenação / criação só quando muda o conjunto visível
+    const key = filter + '|' + visible.map(s => s.id).join(',');
+    if (key !== lastKey) {
+      lastKey = key;
+
+      visible.forEach(s => {
+        let el = document.getElementById('srv-' + s.id);
+        if (!el) el = createCard(s);
+        el.style.display = '';
+        list.appendChild(el);      // move pra ordem correta
+      });
+
+      // Esconde cards que não estão no filtro atual (ou remove órfãos)
+      [...list.children].forEach(ch => {
+        const srv = servers.find(s => 'srv-' + s.id === ch.id);
+        if (!srv) { ch.remove(); return; }
+        const matches = !filter || srv.code.toUpperCase().includes(filter);
+        ch.style.display = matches ? '' : 'none';
+      });
+    }
+
+    // 4) Atualiza os tempos
+    visible.forEach(s => {
+      const el = document.getElementById('srv-' + s.id);
+      if (el) updateCard(el, s, now);
+    });
+
+    // 5) Estados vazios
+    const hasServers  = servers.length > 0;
+    const hasVisible  = visible.length > 0;
+    emptyEl.style.display     = hasServers ? 'none' : 'block';
+    emptyFilter.style.display = (hasServers && !hasVisible) ? 'block' : 'none';
+    footer.style.display      = hasServers ? 'flex' : 'none';
+
+    // 6) Título da aba
+    if (visible.length) {
+      const n = visible[0];
+      const r = n.spawnAt - now;
+      document.title = (r > 0 ? fmt(r) + ' • ' : '🎯 ') + n.code;
+    } else if (hasServers && !hasVisible) {
+      document.title = 'Sem resultados • Timer de Boss';
+    } else {
+      document.title = 'Timer de Boss';
+    }
+  }
+
+  /* ---------------- eventos ---------------- */
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+
+    // ✅ código sempre em MAIÚSCULAS
+    const code = codeInput.value.trim().toUpperCase();
+    if (!code) return;
+
+    let minutes = parseFloat(minInput.value);
+    if (!Number.isFinite(minutes) || minutes <= 0) minutes = 15;
+
+    servers.push({
+      id: uid(),
+      code,
+      minutes,
+      spawnAt: Date.now() + minutes * 60000
+    });
+
+    save();
+    codeInput.value = '';
+    codeInput.focus();
+    lastKey = '';
+    tick();
+  });
+
+  // Filtro em tempo real
+  filterInput.addEventListener('input', () => {
+    lastKey = '';   // força redesenho imediato
+    tick();
+  });
+
+  document.getElementById('clearAll').addEventListener('click', () => {
+    if (!confirm('Remover todos os servidores da lista?')) return;
+    servers = [];
+    save();
+    lastKey = '';
+    tick();
+  });
+
+  /* ---------------- start ---------------- */
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
